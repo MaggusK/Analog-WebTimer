@@ -422,6 +422,22 @@
             }
         }
 
+        .github-link {
+            font-size: clamp(8px, 1vh, 10px);
+            opacity: 0.7;
+            margin-top: 0.5vh;
+            text-align: right;
+        }
+
+        .github-link a {
+            color: inherit;
+            text-decoration: none;
+        }
+
+        .github-link a:hover {
+            text-decoration: underline;
+        }
+
         /* Responsive adjustments for smaller screens */
         @media (max-height: 600px) {
             #additionalText {
@@ -547,6 +563,9 @@
                 </select>
             </div>
         </div>
+        <div class="github-link">
+            <a href="https://github.com/MaggusK/Analog-WebTimer/" target="_blank" rel="noopener noreferrer">Analog WebTimer on GitHub</a> | GPL-3.0
+        </div>
     </div>
 
     <script>
@@ -556,6 +575,54 @@
         let selectedMinutes = 5;
         let isRunning = false;
         let isPaused = false;
+
+        /* Language detection */
+        const lang = navigator.language.startsWith('de') ? 'de' : 'en';
+
+        const translations = {
+            de: {
+                start: 'Start',
+                pause: 'Pause',
+                continue: 'Weiter',
+                reset: 'Zurücksetzen',
+                selectTime: 'Zeit auswählen:',
+                minutes: 'Minuten',
+                minute: 'Minute',
+                additionalText: 'Zusätzlicher Text:',
+                additionalTextPlaceholder: 'Zusätzlicher Text',
+                colors: 'Farben:',
+                bgColorTitle: 'Hintergrundfarbe',
+                chartColorTitle: 'Diagrammfarbe',
+                animation: 'Animation:',
+                animationNone: 'Keine',
+                animationFlicker: 'Flicker Gradient',
+                animationGradient: 'Gradient Welle',
+                animationBlob: 'Blob Gradient',
+                defaultText: 'gleich gehts weiter...'
+            },
+            en: {
+                start: 'Start',
+                pause: 'Pause',
+                continue: 'Continue',
+                reset: 'Reset',
+                selectTime: 'Select Time:',
+                minutes: 'Minutes',
+                minute: 'Minute',
+                additionalText: 'Additional Text:',
+                additionalTextPlaceholder: 'Additional Text',
+                colors: 'Colors:',
+                bgColorTitle: 'Background Color',
+                chartColorTitle: 'Chart Color',
+                animation: 'Animation:',
+                animationNone: 'None',
+                animationFlicker: 'Flicker Gradient',
+                animationGradient: 'Gradient Wave',
+                animationBlob: 'Blob Gradient',
+                defaultText: 'be right back...'
+            }
+        };
+
+        const t = translations[lang];
 
         const controlBox = document.getElementById('control-box');
         const pauseButton = document.getElementById('pause-button');
@@ -570,9 +637,7 @@
         });
 
         controlBox.addEventListener('mouseleave', () => {
-            if (isRunning) {
-                controlBox.classList.remove('visible');
-            }
+            controlBox.classList.remove('visible');
         });
 
         function updateTimeFromSlider() {
@@ -585,7 +650,8 @@
             totalTime = selectedMinutes * 60;
             timeLeft = totalTime;
 
-            display.textContent = selectedMinutes + ' Minutes';
+            const minuteText = selectedMinutes === 1 ? t.minute : t.minutes;
+            display.textContent = selectedMinutes + ' ' + minuteText;
 
             updateDisplay();
             saveSettings();
@@ -638,7 +704,7 @@
 
             isRunning = true;
             isPaused = false;
-            pauseButton.textContent = 'Pause';
+            pauseButton.textContent = t.pause;
             updateDisplay();
 
             timer = setInterval(() => {
@@ -662,10 +728,10 @@
 
             if (isPaused) {
                 isPaused = false;
-                pauseButton.textContent = 'Pause';
+                pauseButton.textContent = t.pause;
             } else {
                 isPaused = true;
-                pauseButton.textContent = 'Continue';
+                pauseButton.textContent = t.continue;
             }
         }
 
@@ -675,10 +741,9 @@
             isPaused = false;
             timeLeft = selectedMinutes * 60;
             totalTime = timeLeft;
-            pauseButton.textContent = 'Pause';
+            pauseButton.textContent = t.pause;
             updateDisplay();
             document.body.classList.remove('fade-out');
-            controlBox.classList.add('visible');
         }
 
         function applyTheme(backgroundColor, textColorValue) {
@@ -771,13 +836,45 @@
             localStorage.setItem('analogTimerSettings', JSON.stringify(settings));
         }
 
+        function initializeTexts() {
+            /* Set button texts */
+            document.querySelector('button[onclick="startTimer()"]').textContent = t.start;
+            pauseButton.textContent = t.pause;
+            document.querySelector('button[onclick="resetTimer()"]').textContent = t.reset;
+
+            /* Set labels */
+            const labels = document.querySelectorAll('.setting label');
+            document.querySelector('label[for="timeSlider"]').textContent = t.selectTime;
+            document.querySelector('label[for="customText"]').textContent = t.additionalText;
+            document.querySelectorAll('.setting label')[2].textContent = t.colors;
+            document.querySelector('label[for="animationSelect"]').textContent = t.animation;
+
+            /* Set placeholders and tooltips */
+            document.getElementById('customText').placeholder = t.additionalTextPlaceholder;
+            document.getElementById('bgColor').title = t.bgColorTitle;
+            document.getElementById('chartColor').title = t.chartColorTitle;
+
+            /* Set animation options */
+            const options = animationSelect.querySelectorAll('option');
+            options[0].textContent = t.animationNone;
+            options[1].textContent = t.animationFlicker;
+            options[2].textContent = t.animationGradient;
+            options[3].textContent = t.animationBlob;
+
+            /* Set default text if none set and no saved settings */
+            if (!localStorage.getItem('analogTimerSettings')) {
+                document.getElementById('customText').value = t.defaultText;
+                document.getElementById('additionalText').textContent = t.defaultText;
+            }
+        }
+
         function loadSettings() {
             const saved = localStorage.getItem('analogTimerSettings');
             if (saved) {
                 try {
                     const settings = JSON.parse(saved);
                     selectedMinutes = settings.selectedMinutes || 5;
-                    document.getElementById('customText').value = settings.customText || 'be right back...';
+                    document.getElementById('customText').value = settings.customText || t.defaultText;
                     document.getElementById('bgColor').value = settings.bgColor || '#282c34';
                     document.getElementById('chartColor').value = settings.chartColor || '#61dafb';
                     animationSelect.value = settings.animation || 'none';
@@ -786,7 +883,8 @@
                     const slider = document.getElementById('timeSlider');
                     const display = document.getElementById('timeDisplay');
                     slider.value = selectedMinutes;
-                    display.textContent = selectedMinutes + ' Minutes';
+                    const minuteText = selectedMinutes === 1 ? t.minute : t.minutes;
+                    display.textContent = selectedMinutes + ' ' + minuteText;
                 } catch (e) {
                     console.error('Error loading settings:', e);
                 }
@@ -795,6 +893,7 @@
 
         /* Initialize on page load */
         document.addEventListener('DOMContentLoaded', () => {
+            initializeTexts();
             loadSettings();
             controlBox.classList.add('visible');
             timeLeft = selectedMinutes * 60;

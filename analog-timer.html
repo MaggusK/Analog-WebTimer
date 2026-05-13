@@ -1,10 +1,14 @@
 <!DOCTYPE html>
-<html lang="de">
+<html lang="en">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Analog WebTimer</title>
     <style>
+        :root {
+            --animation-size: 22px;
+        }
+
         * {
             box-sizing: border-box;
         }
@@ -64,15 +68,21 @@
             width: 100%;
             height: 100%;
             transition: opacity 0.3s ease;
+            transform: rotate(90deg) scaleX(-1);
         }
 
         .pie-background {
-            fill: rgba(255, 255, 255, 0.1);
+            fill: none;
+            stroke: rgba(255, 255, 255, 0.1);
+            stroke-width: 13;
         }
 
         .pie-progress {
-            fill: #61dafb;
-            transition: fill 0.3s ease;
+            fill: none;
+            stroke: #61dafb;
+            stroke-width: 13;
+            transition: stroke 0.3s ease;
+            stroke-linecap: butt;
         }
 
         .fade-out #pieChart,
@@ -93,7 +103,7 @@
 
         .minute-label {
             position: absolute;
-            font-size: clamp(18px, 3vh, 36px);
+            font-size: clamp(16px, 2.8vh, 34px);
             font-weight: bold;
             transform: translate(-50%, -50%);
             transition: all 0.3s ease;
@@ -197,33 +207,222 @@
             cursor: pointer;
         }
 
-        .time-buttons {
+        .time-slider-container {
+            display: flex;
+            align-items: center;
+            gap: clamp(10px, 2vw, 15px);
+            flex: 1;
+        }
+
+        #timeSlider {
+            flex: 1;
+            min-width: clamp(120px, 30vw, 200px);
+            height: clamp(6px, 0.8vh, 8px);
+            -webkit-appearance: none;
+            appearance: none;
+            background: linear-gradient(to right, #5a6678 0%, #61dafb 100%);
+            border-radius: 10px;
+            outline: none;
+            cursor: pointer;
+        }
+
+        #timeSlider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: clamp(18px, 2.5vh, 24px);
+            height: clamp(18px, 2.5vh, 24px);
+            background: #61dafb;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #timeSlider::-webkit-slider-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 8px rgba(97, 218, 251, 0.6);
+        }
+
+        #timeSlider::-moz-range-thumb {
+            width: clamp(18px, 2.5vh, 24px);
+            height: clamp(18px, 2.5vh, 24px);
+            background: #61dafb;
+            border: 2px solid #ffffff;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        #timeSlider::-moz-range-thumb:hover {
+            transform: scale(1.15);
+            box-shadow: 0 0 8px rgba(97, 218, 251, 0.6);
+        }
+
+        #timeDisplay {
+            font-size: clamp(13px, 1.5vh, 16px);
+            font-weight: bold;
+            color: #61dafb;
+            min-width: clamp(70px, 15vw, 100px);
+            text-align: right;
+        }
+
+        .color-settings {
+            display: flex;
+            gap: clamp(5px, 1vw, 10px);
+            align-items: stretch;
+            flex-wrap: wrap;
+        }
+
+        .color-inputs {
+            display: flex;
+            flex-direction: column;
+            gap: clamp(3px, 0.5vh, 8px);
+        }
+
+        .theme-previews {
             display: flex;
             gap: clamp(5px, 1vw, 10px);
             flex-wrap: wrap;
         }
 
-        .time-button {
-            padding: clamp(5px, 1vh, 10px) clamp(10px, 2vw, 20px);
-            font-size: clamp(12px, 1.5vh, 16px);
+        .theme-preview {
+            width: clamp(50px, 10vw, 70px);
+            height: clamp(53px, 6.5vh, 78px);
+            border: 1px solid #fff;
+            border-radius: 3px;
             cursor: pointer;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            font-size: clamp(6px, 0.8vh, 8px);
+            line-height: 1.2;
+            padding: 2px;
+            transition: transform 0.2s;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Arial, sans-serif;
+        }
+
+        .theme-preview:hover {
+            transform: scale(1.05);
+        }
+
+        .theme-preview .preview-text {
+            font-size: clamp(4px, 0.6vh, 6px);
+            text-align: center;
+            margin-bottom: 1px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 100%;
+        }
+
+        .theme-preview .preview-time {
+            font-weight: bold;
+        }
+
+        .setting select {
+            padding: clamp(3px, 0.5vh, 6px);
+            font-size: clamp(11px, 1.5vh, 14px);
+            border: 1px solid #ffffff;
+            border-radius: 3px;
             background-color: #5a6678;
             color: white;
-            border: 2px solid #5a6678;
-            border-radius: 5px;
-            transition: all 0.3s;
+            cursor: pointer;
+            min-width: clamp(100px, 15vw, 150px);
         }
 
-        .time-button:hover {
-            background-color: #6a7688;
+        #backgroundAnimation {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            z-index: -1;
+            opacity: 0;
+            transition: opacity 3s;
+            pointer-events: none;
         }
 
-        .time-button.active {
-            background-color: #4a5568;
-            border-color: #61dafb;
+        #backgroundAnimation.active {
+            opacity: 1;
         }
 
-        /* Responsive Anpassungen für kleinere Bildschirme */
+        .fade-out #backgroundAnimation {
+            opacity: 0 !important;
+        }
+
+        /* Background animation: Flicker effect */
+        #backgroundAnimation.anim-flicker {
+            background: conic-gradient(from 175deg at 48% 68%, hsla(0,0%,98%,1) 0deg, #f0c530 68deg, #ed4d4d 140deg, #729cb7 220deg, #50fec1 292deg, hsla(0,0%,98%,1) 1turn);
+            mask:
+                radial-gradient(circle at 50% 50%, white 2.2px, transparent 2.7px) 50% 50% / var(--animation-size) var(--animation-size),
+                url("https://assets.codepen.io/605876/noise-mask.png") 256px 50% / 256px 256px;
+            mask-composite: intersect;
+            animation: flicker 22s infinite linear;
+        }
+
+        @keyframes flicker {
+            to {
+                mask-position: 50% 50%, 0 50%;
+            }
+        }
+
+        /* Background animation: Gradient wave effect */
+        #backgroundAnimation.anim-gradient {
+            background: linear-gradient(-42deg, #ef7a55, #e83f80, #26a8d7, #26d7ad);
+            background-size: 420% 420%;
+            animation: gradient 65s ease infinite;
+        }
+
+        @keyframes gradient {
+            0% {
+                background-position: 0% 50%;
+            }
+            50% {
+                background-position: 100% 50%;
+            }
+            100% {
+                background-position: 0% 50%;
+            }
+        }
+
+        /* Background animation: Blob effect */
+        #backgroundAnimation.anim-blob {
+            background-color: #081d3b;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        #backgroundAnimation.anim-blob .gradient {
+            --size: 780px;
+            --speed: 22s;
+            --easing: cubic-bezier(0.78, 0.22, 0.18, 0.82);
+            width: var(--size);
+            height: var(--size);
+            filter: blur(calc(var(--size) / 4.8));
+            background-image: linear-gradient(hsl(220, 82%, 58%), hsl(166, 76%, 69%));
+            animation: rotate var(--speed) var(--easing) alternate infinite;
+            border-radius: 32% 68% 68% 32% / 28% 32% 68% 72%;
+            transition: all 0.5s ease-out;
+        }
+
+        @keyframes rotate {
+            0% {
+                transform: rotate(0deg);
+            }
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        @media (min-width: 720px) {
+            #backgroundAnimation.anim-blob .gradient {
+                --size: 520px;
+            }
+        }
+
+        /* Responsive adjustments for smaller screens */
         @media (max-height: 600px) {
             #additionalText {
                 font-size: clamp(14px, 4vh, 60px);
@@ -268,9 +467,8 @@
                 width: 100%;
             }
 
-            .time-buttons {
+            .time-slider-container {
                 width: 100%;
-                justify-content: center;
             }
 
             #clockContainer {
@@ -281,13 +479,14 @@
     </style>
 </head>
 <body>
+    <div id="backgroundAnimation"></div>
     <div id="mainContent">
-        <div id="additionalText">gleich gehts weiter...</div>
+        <div id="additionalText">be right back...</div>
 
         <div id="clockContainer">
             <svg id="pieChart" viewBox="0 0 200 200">
-                <circle class="pie-background" cx="100" cy="100" r="85" />
-                <path id="pieProgress" class="pie-progress" d="" />
+                <circle class="pie-background" cx="100" cy="100" r="78" />
+                <circle id="pieProgress" class="pie-progress" cx="100" cy="100" r="78" />
             </svg>
             <div id="minuteLabels"></div>
         </div>
@@ -297,28 +496,55 @@
         <div class="controls" id="controls">
             <button id="start-button" onclick="startTimer()">Start</button>
             <button id="pause-button" onclick="pauseTimer()">Pause</button>
-            <button onclick="resetTimer()">Zurücksetzen</button>
+            <button onclick="resetTimer()">Reset</button>
         </div>
         <div class="settings" id="settings">
             <div class="setting">
-                <label>Zeit auswählen:</label>
-                <div class="time-buttons">
-                    <button class="time-button active" onclick="selectTime(5)">5 Minuten</button>
-                    <button class="time-button" onclick="selectTime(10)">10 Minuten</button>
-                    <button class="time-button" onclick="selectTime(15)">15 Minuten</button>
+                <label for="timeSlider">Select Time:</label>
+                <div class="time-slider-container">
+                    <input type="range" id="timeSlider" min="3" max="30" value="5" oninput="updateTimeFromSlider()" />
+                    <span id="timeDisplay">5 Minutes</span>
                 </div>
             </div>
             <div class="setting">
-                <label for="customText">Zusätzlicher Text:</label>
-                <input type="text" id="customText" value="gleich gehts weiter..." placeholder="Zusätzlicher Text" onchange="updateDisplay()" />
+                <label for="customText">Additional Text:</label>
+                <input type="text" id="customText" value="be right back..." placeholder="Additional Text" onchange="updateDisplay()" />
             </div>
             <div class="setting">
-                <label for="bgColor">Hintergrundfarbe:</label>
-                <input type="color" id="bgColor" value="#282c34" onchange="updateDisplay()" />
+                <label>Colors:</label>
+                <div class="color-settings">
+                    <div class="color-inputs">
+                        <input type="color" id="bgColor" value="#282c34" onchange="updateDisplay()" title="Background Color" />
+                        <input type="color" id="chartColor" value="#61dafb" onchange="updateDisplay()" title="Chart Color" />
+                    </div>
+                    <div class="theme-previews">
+                        <button class="theme-preview" onclick="applyTheme('rgb(186, 189, 182)', 'rgb(117, 80, 123)')" style="background-color: rgb(186, 189, 182); color: rgb(117, 80, 123);">
+                            <div class="preview-text">Text</div>
+                            <div class="preview-time">5:00</div>
+                        </button>
+                        <button class="theme-preview" onclick="applyTheme('rgb(92, 53, 102)', 'rgb(252, 175, 62)')" style="background-color: rgb(92, 53, 102); color: rgb(252, 175, 62);">
+                            <div class="preview-text">Text</div>
+                            <div class="preview-time">5:00</div>
+                        </button>
+                        <button class="theme-preview" onclick="applyTheme('rgb(243, 243, 243)', 'rgb(114, 159, 207)')" style="background-color: rgb(243, 243, 243); color: rgb(114, 159, 207);">
+                            <div class="preview-text">Text</div>
+                            <div class="preview-time">5:00</div>
+                        </button>
+                        <button class="theme-preview" onclick="applyTheme('rgb(62, 66, 128)', 'rgb(233, 207, 28)')" style="background-color: rgb(62, 66, 128); color: rgb(233, 207, 28);">
+                            <div class="preview-text">Text</div>
+                            <div class="preview-time">5:00</div>
+                        </button>
+                    </div>
+                </div>
             </div>
             <div class="setting">
-                <label for="chartColor">Diagrammfarbe:</label>
-                <input type="color" id="chartColor" value="#61dafb" onchange="updateDisplay()" />
+                <label for="animationSelect">Animation:</label>
+                <select id="animationSelect" onchange="updateAnimation()">
+                    <option value="none">None</option>
+                    <option value="flicker">Flicker Gradient</option>
+                    <option value="gradient">Gradient Wave</option>
+                    <option value="blob">Blob Gradient</option>
+                </select>
             </div>
         </div>
     </div>
@@ -334,8 +560,11 @@
         const controlBox = document.getElementById('control-box');
         const pauseButton = document.getElementById('pause-button');
         const pieProgress = document.getElementById('pieProgress');
+        const backgroundAnimation = document.getElementById('backgroundAnimation');
+        const animationSelect = document.getElementById('animationSelect');
+        const themePreviews = document.querySelectorAll('.theme-preview');
 
-        // Show/hide controls on mouseover
+        /* Show/hide controls on mouseover */
         controlBox.addEventListener('mouseover', () => {
             controlBox.classList.add('visible');
         });
@@ -346,20 +575,20 @@
             }
         });
 
-        function selectTime(minutes) {
+        function updateTimeFromSlider() {
             if (isRunning) return;
 
-            selectedMinutes = minutes;
-            totalTime = minutes * 60;
+            const slider = document.getElementById('timeSlider');
+            const display = document.getElementById('timeDisplay');
+
+            selectedMinutes = parseInt(slider.value);
+            totalTime = selectedMinutes * 60;
             timeLeft = totalTime;
 
-            // Update button states
-            document.querySelectorAll('.time-button').forEach(btn => {
-                btn.classList.remove('active');
-            });
-            event.target.classList.add('active');
+            display.textContent = selectedMinutes + ' Minutes';
 
             updateDisplay();
+            saveSettings();
         }
 
         function createMinuteLabels() {
@@ -368,11 +597,11 @@
 
             const centerX = 50;
             const centerY = 50;
-            const labelRadius = 48; // Closer to the diagram
+            const labelRadius = 47; /* Outside the ring, adjusted for small displays */
 
             for (let i = selectedMinutes; i >= 1; i--) {
-                // Start at top (0 degrees) and go clockwise
-                // selectedMinutes at 0°, (selectedMinutes-1) at next position clockwise, etc.
+                /* Start at top (0 degrees) and go clockwise */
+                /* selectedMinutes at 0°, (selectedMinutes-1) at next position clockwise, etc. */
                 const angle = ((selectedMinutes - i) * (360 / selectedMinutes)) * (Math.PI / 180);
                 const x = centerX + labelRadius * Math.sin(angle);
                 const y = centerY - labelRadius * Math.cos(angle);
@@ -387,50 +616,16 @@
             }
         }
 
-        function polarToCartesian(centerX, centerY, radius, angleInDegrees) {
-            const angleInRadians = (angleInDegrees - 90) * Math.PI / 180.0;
-            return {
-                x: centerX + (radius * Math.cos(angleInRadians)),
-                y: centerY + (radius * Math.sin(angleInRadians))
-            };
-        }
-
         function updatePieChart() {
             const progress = timeLeft / totalTime;
-            const centerX = 100;
-            const centerY = 100;
-            const radius = 85;
+            const radius = 78;
+            const circumference = 2 * Math.PI * radius;
 
-            // Angle in degrees (360 = full circle, counter-clockwise from top)
-            const angle = progress * 360;
-
-            if (progress <= 0) {
-                // No pie slice
-                pieProgress.setAttribute('d', '');
-                return;
-            }
-
-            if (progress >= 0.9999) {
-                // Full circle - draw two half circles to complete the full pie
-                pieProgress.setAttribute('d',
-                    `M ${centerX},${centerY} L ${centerX},${centerY - radius} A ${radius},${radius} 0 0,0 ${centerX},${centerY + radius} A ${radius},${radius} 0 0,0 ${centerX},${centerY - radius} Z`
-                );
-                return;
-            }
-
-            // Calculate end point of the arc (counter-clockwise)
-            const end = polarToCartesian(centerX, centerY, radius, -angle);
-            const largeArcFlag = angle > 180 ? 1 : 0;
-
-            // Draw pie slice: Move to center, line to start (top), arc counter-clockwise to end, close path
-            const pathData = [
-                `M ${centerX},${centerY}`,
-                `L ${centerX},${centerY - radius}`,
-                `A ${radius},${radius} 0 ${largeArcFlag},0 ${end.x},${end.y}`,
-                'Z'
-            ].join(' ');
-
-            pieProgress.setAttribute('d', pathData);
+            /* Set the stroke-dasharray and stroke-dashoffset */
+            /* stroke-dasharray: full circumference */
+            /* stroke-dashoffset: moves based on progress (0 = full, circumference = empty) */
+            pieProgress.style.strokeDasharray = circumference;
+            pieProgress.style.strokeDashoffset = circumference * (1 - progress);
         }
 
         function startTimer() {
@@ -470,7 +665,7 @@
                 pauseButton.textContent = 'Pause';
             } else {
                 isPaused = true;
-                pauseButton.textContent = 'Weiter';
+                pauseButton.textContent = 'Continue';
             }
         }
 
@@ -486,36 +681,144 @@
             controlBox.classList.add('visible');
         }
 
+        function applyTheme(backgroundColor, textColorValue) {
+            /* Convert RGB to Hex for color inputs */
+            document.getElementById('bgColor').value = rgbToHex(backgroundColor);
+            document.getElementById('chartColor').value = rgbToHex(textColorValue);
+            updateDisplay();
+        }
+
+        function rgbToHex(rgb) {
+            const match = rgb.match(/\d+/g);
+            if (!match) return '#000000';
+            const r = parseInt(match[0]);
+            const g = parseInt(match[1]);
+            const b = parseInt(match[2]);
+            return '#' + [r, g, b].map(x => {
+                const hex = x.toString(16);
+                return hex.length === 1 ? '0' + hex : hex;
+            }).join('');
+        }
+
+        function updateAnimation() {
+            const animation = animationSelect.value;
+
+            /* Remove all animation classes and clear content */
+            backgroundAnimation.className = '';
+            backgroundAnimation.innerHTML = '';
+
+            /* Add selected animation class */
+            if (animation !== 'none') {
+                backgroundAnimation.classList.add('active');
+                backgroundAnimation.classList.add('anim-' + animation);
+
+                /* Add gradient div for blob animation */
+                if (animation === 'blob') {
+                    const gradientDiv = document.createElement('div');
+                    gradientDiv.className = 'gradient';
+                    backgroundAnimation.appendChild(gradientDiv);
+                }
+            }
+
+            saveSettings();
+        }
+
+        function updateThemePreviews() {
+            const previewText = document.getElementById('customText').value || 'Text';
+            const previewTime = selectedMinutes + ':00';
+
+            themePreviews.forEach(preview => {
+                preview.querySelector('.preview-text').textContent = previewText;
+                preview.querySelector('.preview-time').textContent = previewTime;
+            });
+        }
+
         function updateDisplay() {
-            // Update additional text
+            /* Update additional text */
             document.getElementById('additionalText').textContent =
                 document.getElementById('customText').value;
 
-            // Update colors
+            /* Update colors */
             document.body.style.backgroundColor = document.getElementById('bgColor').value;
             document.body.style.color = document.getElementById('chartColor').value;
-            pieProgress.style.fill = document.getElementById('chartColor').value;
+            pieProgress.style.stroke = document.getElementById('chartColor').value;
 
-            // Update pie chart
+            /* Update ring chart */
             if (timeLeft === undefined) {
                 timeLeft = selectedMinutes * 60;
                 totalTime = timeLeft;
             }
             updatePieChart();
 
-            // Update minute labels
+            /* Update minute labels */
             createMinuteLabels();
+
+            /* Update theme preview buttons */
+            updateThemePreviews();
+
+            /* Save settings */
+            saveSettings();
         }
 
-        // Initialize on page load
+        function saveSettings() {
+            const settings = {
+                selectedMinutes: selectedMinutes,
+                customText: document.getElementById('customText').value,
+                bgColor: document.getElementById('bgColor').value,
+                chartColor: document.getElementById('chartColor').value,
+                animation: animationSelect.value
+            };
+            localStorage.setItem('analogTimerSettings', JSON.stringify(settings));
+        }
+
+        function loadSettings() {
+            const saved = localStorage.getItem('analogTimerSettings');
+            if (saved) {
+                try {
+                    const settings = JSON.parse(saved);
+                    selectedMinutes = settings.selectedMinutes || 5;
+                    document.getElementById('customText').value = settings.customText || 'be right back...';
+                    document.getElementById('bgColor').value = settings.bgColor || '#282c34';
+                    document.getElementById('chartColor').value = settings.chartColor || '#61dafb';
+                    animationSelect.value = settings.animation || 'none';
+
+                    /* Update slider and display */
+                    const slider = document.getElementById('timeSlider');
+                    const display = document.getElementById('timeDisplay');
+                    slider.value = selectedMinutes;
+                    display.textContent = selectedMinutes + ' Minutes';
+                } catch (e) {
+                    console.error('Error loading settings:', e);
+                }
+            }
+        }
+
+        /* Initialize on page load */
         document.addEventListener('DOMContentLoaded', () => {
+            loadSettings();
             controlBox.classList.add('visible');
             timeLeft = selectedMinutes * 60;
             totalTime = timeLeft;
+            updateAnimation();
             updateDisplay();
+
+            /* Mouse wheel support for time slider */
+            const timeSlider = document.getElementById('timeSlider');
+            timeSlider.addEventListener('wheel', (e) => {
+                e.preventDefault();
+                const currentValue = parseInt(timeSlider.value);
+                const delta = e.deltaY > 0 ? -1 : 1;
+                let newValue = currentValue + delta;
+
+                if (newValue < 3) newValue = 3;
+                if (newValue > 30) newValue = 30;
+
+                timeSlider.value = newValue;
+                updateTimeFromSlider();
+            });
         });
 
-        // Update on window resize
+        /* Update on window resize */
         window.addEventListener('resize', () => {
             createMinuteLabels();
         });
